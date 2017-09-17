@@ -11,8 +11,8 @@ BlinkPattern led(BUILTIN_LED);
 BlinkPattern::Pattern<2> initialize{{1,1},50};
 BlinkPattern::Pattern<2> on{{39,1},25};
 BlinkPattern::Pattern<2> off{{1,39},25};
-BlinkPattern::Pattern<2> reqOn{{1,9},25};
-BlinkPattern::Pattern<2> reqOff{{9,1},25};
+BlinkPattern::Pattern<2> reqOn{{1,3},250};
+BlinkPattern::Pattern<2> reqOff{{3,1},250};
 
 bool state = true;
 bool buttonState = false;
