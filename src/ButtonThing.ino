@@ -17,7 +17,7 @@ BlinkPattern::Pattern<2> reqOff{{3,1},250};
 bool state = true;
 bool buttonState = false;
 bool feedbackState = false;
-
+long nextSwitch = 0;
 
 void setup()
 {
@@ -68,8 +68,9 @@ void loop()
 void handle()
 {
   bool pushed = !digitalRead(BUTTON_PIN);
-  if (pushed && pushed != buttonState)
+  if (pushed && pushed != buttonState && millis() > nextSwitch)
   {
+    nextSwitch = millis() + 500;
     state = !state;
     if(state)
       led.setPattern(reqOn);
