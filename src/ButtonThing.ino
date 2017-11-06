@@ -35,27 +35,24 @@ void setup()
   thing.onStateChange([](const String& msg){
     Serial.println(msg);
   });
-  String sensor = "sensor/button/";
-  sensor += thing.clientId();
-  thing.addSensor(sensor, 1000, [](Value& value){
-    value = state;
-  });
 
-  String display = "display/button/";
-  display += thing.clientId();
-  thing.addActuator(display, [](Value& value){
+  thing.begin();
+
+  //thing.addSensor(thing.clientId() + "/button/state", 1000, [](Value& value){
+  //  value = state;
+  //});
+
+  thing.addActuator(thing.clientId() + "/button/feedback", [](Value& value){
     Serial.println("Got " + (String)value);
     feedbackState = (bool)value;
-    Serial.println("Got " + feedbackState);
+    state = feedbackState;
     //digitalWrite(BUILTIN_LED, !feedbackState);
-    
+
     if(feedbackState)
       led.setPattern(on);
     else
       led.setPattern(off);
   });
-  
-  thing.begin();
 }
 
 void loop()
@@ -70,13 +67,16 @@ void handle()
   bool pushed = !digitalRead(BUTTON_PIN);
   if (pushed && pushed != buttonState && millis() > nextSwitch)
   {
+
     nextSwitch = millis() + 500;
     state = !state;
     if(state)
       led.setPattern(reqOn);
     else
       led.setPattern(reqOff);
-    
+
+    Value value = state;
+    thing.publish(thing.clientId() + "/button/state", value);
   }
   buttonState = pushed;
 }
