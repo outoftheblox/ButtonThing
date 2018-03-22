@@ -3,7 +3,7 @@
 
 #define BUTTON_PIN D3
 
-using namespace g3rb3n;
+using namespace ootb;
 
 Thing thing;
 BlinkPattern led(BUILTIN_LED);
@@ -42,7 +42,7 @@ void setup()
   //  value = state;
   //});
 
-  thing.addActuator(thing.clientId() + "/button/feedback", [](Value& value){
+  thing.addActuator("button/feedback/" + thing.clientId(), [](Value& value){
     Serial.println("Got " + (String)value);
     feedbackState = (bool)value;
     state = feedbackState;
@@ -76,7 +76,7 @@ void handle()
       led.setPattern(reqOff);
 
     Value value = state;
-    thing.publish(thing.clientId() + "/button/state", value);
+    thing.publish("button/state/" + thing.clientId(), value);
   }
   buttonState = pushed;
 }
