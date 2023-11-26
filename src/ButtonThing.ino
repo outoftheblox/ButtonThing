@@ -1,82 +1,65 @@
 #include <Thing.h>
 #include <BlinkPattern.h>
+#include "Button.h"
 
 #define BUTTON_PIN D3
 
 using namespace ootb;
 
 Thing thing;
+Button button(BUTTON_PIN, 100);
+
 BlinkPattern led(BUILTIN_LED);
 
-BlinkPattern::Pattern<2> initialize{{1,1},50};
-BlinkPattern::Pattern<2> on{{39,1},25};
-BlinkPattern::Pattern<2> off{{1,39},25};
-BlinkPattern::Pattern<2> reqOn{{1,3},250};
-BlinkPattern::Pattern<2> reqOff{{3,1},250};
+BlinkPattern::Pattern<2> initialize{{1, 1}, 50};
+BlinkPattern::Pattern<2> initialized{{1, 1}, 250};
+BlinkPattern::Pattern<2> on{{39, 1}, 25};
+BlinkPattern::Pattern<2> off{{1, 39}, 25};
+BlinkPattern::Pattern<2> reqOn{{1, 3}, 250};
+BlinkPattern::Pattern<2> reqOff{{3, 1}, 250};
 
-bool state = true;
-bool buttonState = false;
 bool feedbackState = false;
-long nextSwitch = 0;
+
+String actuatorTopic = "things/" + thing.clientId() + "/button/state";
+String feedbackTopic = "things/" + thing.clientId() + "/button/feedback";
 
 void setup()
 {
-  Serial.begin(230400);
-  Serial.println();
+    Serial.begin(230400);
+    Serial.println();
+    Serial.println("ClientID:" + thing.clientId());
 
-  Serial.println("ClientID:" + thing.clientId());
+    led.begin();
+    led.setPattern(initialize);
 
-  led.begin();
+    thing.onStateChange([](const String &msg)
+    {
+        Serial.println(msg);
+    });
+    
+    button.onChange([](){
+        Value value = button.isPushed();
+        thing.publish(actuatorTopic, value);
+        led.setPattern(button.isPushed() ? reqOn : reqOff);
+        Serial.println("Send " + String(button.isPushed()));
+    });
 
-  pinMode(BUILTIN_LED, OUTPUT);
-  pinMode(BUTTON_PIN, INPUT_PULLUP);
+    thing.begin();
 
-  led.setPattern(initialize);
-  thing.onStateChange([](const String& msg){
-    Serial.println(msg);
-  });
+    thing.addActuator(feedbackTopic, [](Value &value)
+    {
+        feedbackState = (bool)value;
+        led.setPattern(feedbackState ? on : off);
+        Serial.println("Received " + (String)value);
+    });
 
-  thing.begin();
-
-  //thing.addSensor(thing.clientId() + "/button/state", 1000, [](Value& value){
-  //  value = state;
-  //});
-
-  thing.addActuator("button/feedback/" + thing.clientId(), [](Value& value){
-    Serial.println("Got " + (String)value);
-    feedbackState = (bool)value;
-    state = feedbackState;
-    //digitalWrite(BUILTIN_LED, !feedbackState);
-
-    if(feedbackState)
-      led.setPattern(on);
-    else
-      led.setPattern(off);
-  });
+    button.setup();
+    led.setPattern(initialized);
 }
 
 void loop()
 {
-  handle();
-  led.handle();
-  thing.handle();
-}
-
-void handle()
-{
-  bool pushed = !digitalRead(BUTTON_PIN);
-  if (pushed && pushed != buttonState && millis() > nextSwitch)
-  {
-
-    nextSwitch = millis() + 500;
-    state = !state;
-    if(state)
-      led.setPattern(reqOn);
-    else
-      led.setPattern(reqOff);
-
-    Value value = state;
-    thing.publish("button/state/" + thing.clientId(), value);
-  }
-  buttonState = pushed;
+    led.handle();
+    button.handle();
+    thing.handle();
 }
