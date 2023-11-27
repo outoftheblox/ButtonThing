@@ -7,7 +7,7 @@
 using namespace ootb;
 
 Thing thing;
-Button button(BUTTON_PIN, 100);
+Button button(BUTTON_PIN, true, 100);
 
 BlinkPattern led(BUILTIN_LED);
 
@@ -29,6 +29,8 @@ void setup()
     Serial.println();
     Serial.println("ClientID:" + thing.clientId());
 
+    button.begin();
+
     led.begin();
     led.setPattern(initialize);
 
@@ -38,10 +40,10 @@ void setup()
     });
     
     button.onChange([](){
-        Value value = button.isPushed();
+        Value value = button.pressed();
         thing.publish(actuatorTopic, value);
-        led.setPattern(button.isPushed() ? reqOn : reqOff);
-        Serial.println("Send " + String(button.isPushed()));
+        led.setPattern(button.pressed() ? reqOn : reqOff);
+        Serial.println("Send " + String(button.pressed()));
     });
 
     thing.begin();
@@ -53,7 +55,6 @@ void setup()
         Serial.println("Received " + (String)value);
     });
 
-    button.setup();
     led.setPattern(initialized);
 }
 
