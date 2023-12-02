@@ -20,7 +20,8 @@ BlinkPattern::Pattern<2> reqOff{{3, 1}, 250};
 
 bool feedbackState = false;
 
-String actuatorTopic = "things/" + thing.clientId() + "/button/state";
+String stateTopic = "things/" + thing.clientId() + "/button/state";
+String clickedTopic = "things/" + thing.clientId() + "/button/clicked";
 String feedbackTopic = "things/" + thing.clientId() + "/button/feedback";
 
 void setup()
@@ -41,9 +42,13 @@ void setup()
     
     button.onChange([](){
         Value value = button.pressed();
-        thing.publish(actuatorTopic, value);
+        thing.publish(stateTopic, value);
         led.setPattern(button.pressed() ? reqOn : reqOff);
         Serial.println("Send " + String(button.pressed()));
+        if (button.pressed())
+        {
+            thing.publish(clickedTopic, value);
+        }
     });
 
     thing.begin();
